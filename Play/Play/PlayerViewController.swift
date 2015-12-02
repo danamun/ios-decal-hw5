@@ -121,7 +121,7 @@ class PlayerViewController: UIViewController {
      *  sender.selected
      * 
      *  If you are playing the song for the first time, you should be creating 
-     *  an AVPlayerItem from a url and updating the player's currentitem 
+     *  an AVPlayerItem from a url and updating the player's currentitem
      *  property accordingly.
      */
     func playOrPauseTrack(sender: UIButton) {
@@ -129,8 +129,29 @@ class PlayerViewController: UIViewController {
         let clientID = NSDictionary(contentsOfFile: path!)?.valueForKey("client_id") as! String
         let track = tracks[currentIndex]
         let url = NSURL(string: "https://api.soundcloud.com/tracks/\(track.id)/stream?client_id=\(clientID)")!
+        //https://api.soundcloud.com/tracks/71012104/stream?client_id=7d46a83f2ce5c84aa6ef032a6b325d92
+        sender.selected = !sender.selected
+        let item = AVPlayerItem(URL: url)
+        let player = AVPlayer(playerItem: item)
+        print("went in function")
+        player.volume = 0.5
+        player.play()
+        if player.currentItem!.status == .ReadyToPlay {
+            print("here")
+            player.play()
+            player.replaceCurrentItemWithPlayerItem(item)
+        }
         // FILL ME IN
-    
+        /*if (sender.selected) {
+            // means you clicked to pause
+            player.pause()
+        } else {
+            // means your clicked to play
+            if player.currentItem!.status == .ReadyToPlay {
+                player.play()
+                player.replaceCurrentItemWithPlayerItem(item)
+            }
+        }*/
     }
     
     /* 
