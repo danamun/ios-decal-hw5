@@ -24,6 +24,9 @@ class PlayerViewController: UIViewController {
     var artistLabel: UILabel!
     var titleLabel: UILabel!
     
+    var currTime: CMTime!
+    var newItem = true
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view = UIView(frame: UIScreen.mainScreen().bounds)
@@ -34,6 +37,7 @@ class PlayerViewController: UIViewController {
         currentIndex = 0
         
         player = AVPlayer()
+        currTime = CMTimeMake(0,1)
         
         loadVisualElements()
         loadPlayerButtons()
@@ -125,33 +129,40 @@ class PlayerViewController: UIViewController {
      *  property accordingly.
      */
     func playOrPauseTrack(sender: UIButton) {
+        sender.selected = !sender.selected
+        if (!sender.selected) {
+            pause()
+        } else {
+            if (newItem){
+                load()
+            }
+            play()
+        }
+    }
+    
+    func load() {
         let path = NSBundle.mainBundle().pathForResource("Info", ofType: "plist")
         let clientID = NSDictionary(contentsOfFile: path!)?.valueForKey("client_id") as! String
         let track = tracks[currentIndex]
         let url = NSURL(string: "https://api.soundcloud.com/tracks/\(track.id)/stream?client_id=\(clientID)")!
-        //https://api.soundcloud.com/tracks/71012104/stream?client_id=7d46a83f2ce5c84aa6ef032a6b325d92
-        sender.selected = !sender.selected
         let item = AVPlayerItem(URL: url)
-        let player = AVPlayer(playerItem: item)
-        print("went in function")
+  
+        currTime = CMTimeMake(0,1)
+        player.replaceCurrentItemWithPlayerItem(item)
+        newItem = false
+        
+        loadTrackElements()
+    }
+    
+    func pause() {
+        currTime = player.currentTime()
+        player.pause()
+    }
+    
+    func play() {
+        player.seekToTime(currTime)
         player.volume = 0.5
         player.play()
-        if player.currentItem!.status == .ReadyToPlay {
-            print("here")
-            player.play()
-            player.replaceCurrentItemWithPlayerItem(item)
-        }
-        // FILL ME IN
-        /*if (sender.selected) {
-            // means you clicked to pause
-            player.pause()
-        } else {
-            // means your clicked to play
-            if player.currentItem!.status == .ReadyToPlay {
-                player.play()
-                player.replaceCurrentItemWithPlayerItem(item)
-            }
-        }*/
     }
     
     /* 
@@ -161,7 +172,15 @@ class PlayerViewController: UIViewController {
      * Remember to update the currentIndex
      */
     func nextTrackTapped(sender: UIButton) {
-    
+        currentIndex = currentIndex + 1
+        if (tracks.count-1 >= currentIndex && !playPauseButton.selected){
+            //load and play
+            load()
+            play()
+        } else if (tracks.count-1 >= currentIndex && playPauseButton.selected) {
+            // load and don't play
+            load()
+        }
     }
 
     /*
@@ -175,7 +194,16 @@ class PlayerViewController: UIViewController {
      */
 
     func previousTrackTapped(sender: UIButton) {
-    
+        if (player.currentTime() > CMTimeMake(3, 1)) {
+            player.seekToTime(CMTimeMake(0, 1))
+        } else if (currentIndex > 0 && !playPauseButton.selected){
+            currentIndex = currentIndex - 1
+            load()
+            play()
+        } else if (currentIndex > 0 && playPauseButton.selected){
+            currentIndex = currentIndex - 1
+            load()
+        }
     }
     
     
